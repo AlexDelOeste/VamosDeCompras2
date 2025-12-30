@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vamos de Compras 2</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    display: flex;
+    gap: 30px;
+}
+
+/* ====== LAYOUT ====== */
+#panel-izquierdo {
+    width: 40%;
+}
+
+#panel-derecho {
+    width: 60%;
+}
+
+.opciones label {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 5px 0;
+    font-size: 18px;
+}
+
+button {
+    font-size: 18px;
+    padding: 8px 16px;
+    margin-top: 15px;
+    cursor: pointer;
+}
+
+#resultado {
+    margin-top: 25px;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+/* ====== DINERO ====== */
+#dinero-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.caja-jugador {
+    border: 2px solid #333;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.dinero {
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+.valor-slider {
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+/* ====== RESPONSIVE (MÓVIL) ====== */
+@media (max-width: 768px) {
+
+    body {
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    #panel-izquierdo,
+    #panel-derecho {
+        width: 100%;
+    }
+
+    #dinero-grid {
+        grid-template-columns: 1fr;
+    }
+
+    button {
+        width: 100%;
+        font-size: 20px;
+        padding: 12px;
+    }
+
+    input[type="range"] {
+        width: 100%;
+    }
+
+    #resultado {
+        text-align: center;
+        font-size: 20px;
+    }
+
+    .opciones label {
+        font-size: 20px;
+    }
+}
+/* ====== MODAL INSTRUCCIONES ====== */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-contenido {
+    background: white;
+    color: black;
+    padding: 25px;
+    max-width: 600px;
+    width: 90%;
+    border-radius: 10px;
+    text-align: left;
+}
+
+.modal-contenido h2 {
+    margin-top: 0;
+}
+
+.modal-contenido ol {
+    padding-left: 20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="panel-izquierdo">
+
+<h2>Jugadores</h2>
+
+<div class="opciones">
+    <label><input type="checkbox" value="Amarillo"> Amarillo</label>
+    <label><input type="checkbox" value="Rojo"> Rojo</label>
+    <label><input type="checkbox" value="Verde"> Verde</label>
+    <label><input type="checkbox" value="Azul"> Azul</label>
+</div>
+
+<button onclick="siguienteAccion()">Siguiente acción</button>
+<button onclick="mostrarInstrucciones()">Ver Instrucciones</button>
+
+<div id="resultado"></div>
+
+</div>
+
+<div id="panel-derecho">
+
+<h2>Dinero</h2>
+
+<div id="dinero-grid">
+
+<div class="caja-jugador">
+<strong>Amarillo</strong>
+<div class="dinero" id="dinero-Amarillo">$8000</div>
+<input type="range" min="100" max="3000" step="100" value="100"
+id="slider-Amarillo" oninput="actualizarSlider('Amarillo')">
+<div class="valor-slider">$<span id="valor-Amarillo">100</span></div>
+<button onclick="comprar('Amarillo')">Comprar</button>
+</div>
+
+<div class="caja-jugador">
+<strong>Rojo</strong>
+<div class="dinero" id="dinero-Rojo">$8000</div>
+<input type="range" min="100" max="3000" step="100" value="100"
+id="slider-Rojo" oninput="actualizarSlider('Rojo')">
+<div class="valor-slider">$<span id="valor-Rojo">100</span></div>
+<button onclick="comprar('Rojo')">Comprar</button>
+</div>
+
+<div class="caja-jugador">
+<strong>Verde</strong>
+<div class="dinero" id="dinero-Verde">$8000</div>
+<input type="range" min="100" max="3000" step="100" value="100"
+id="slider-Verde" oninput="actualizarSlider('Verde')">
+<div class="valor-slider">$<span id="valor-Verde">100</span></div>
+<button onclick="comprar('Verde')">Comprar</button>
+</div>
+
+<div class="caja-jugador">
+<strong>Azul</strong>
+<div class="dinero" id="dinero-Azul">$8000</div>
+<input type="range" min="100" max="3000" step="100" value="100"
+id="slider-Azul" oninput="actualizarSlider('Azul')">
+<div class="valor-slider">$<span id="valor-Azul">100</span></div>
+<button onclick="comprar('Azul')">Comprar</button>
+</div>
+
+</div>
+</div>
+
+<script>
+function mostrarInstrucciones() {
+  document.getElementById("modal-instrucciones").style.display = "flex";
+}
+
+function cerrarInstrucciones() {
+  document.getElementById("modal-instrucciones").style.display = "none";
+}
+
+/* ========= LÓGICA MAESTRA ========= */
+
+const lugares = [
+"la tienda de maquillaje","la tienda de vestidos","la librería",
+"la tienda de celulares","la tienda de cómputo","la boutique",
+"la joyería","la tienda de regalos","la tienda de deportes",
+"la estética","los videojuegos","la tienda de mascotas","la tienda de música",
+"la mueblería","la juguetería","el supermercado"
+];
+
+const mensajesPenalizacion = [
+"Pierdes un turno en el baño",
+"Reúnete con cualquier jugador en los restaurantes",
+"Reúnete con todos los jugadores en el cine",
+"¡Oh no! Se activó la alarma de seguridad. Pierdes un turno.",
+"Perdiste tu boleto de estacionamiento en el Supermercado. Ve y recupéralo.",
+"Perdiste tu boleto de estacionamiento en el Cine. Ve y recupéralo."
+];
+
+let coloresSeleccionados = [];
+let indiceActual = 0;
+let movimientosRealizados = 0;
+let mostrarOfertasPendiente = true;
+
+/* ====== NUEVA VARIABLE GLOBAL ====== */
+let jugadoresConCuatroCompras = 0;
+
+const dinero = { Amarillo:8000, Rojo:8000, Verde:8000, Azul:8000 };
+const compras = { Amarillo:0, Rojo:0, Verde:0, Azul:0 };
+const penalizacionPendiente = { Amarillo:false, Rojo:false, Verde:false, Azul:false };
+const ventajaHeladoPendiente = { Amarillo:false, Rojo:false, Verde:false, Azul:false };
+
+function aplicarEstilo(color) {
+  const estilos = {
+    Amarillo:["yellow","black"],
+    Rojo:["red","white"],
+    Verde:["#3D9B03","white"],
+    Azul:["#2292CE","white"]
+  };
+  document.body.style.backgroundColor = estilos[color][0];
+  document.body.style.color = estilos[color][1];
+}
+
+function mostrarOfertas() {
+  const r = document.getElementById("resultado");
+  const copia = [...lugares].sort(() => Math.random() - 0.5);
+  document.body.style.backgroundColor = "white";
+  document.body.style.color = "black";
+  r.innerHTML = `
+    <div>¡Chéquenlo!</div>
+    <div>Hay una oferta en <strong>${copia[0]}</strong></div>
+    <div>Y en <strong>${copia[1]}</strong></div>
+    <div>Hay una liquidación en <strong>${copia[2]}</strong></div>
+  `;
+}
+
+function siguienteAccion() {
+  const r = document.getElementById("resultado");
+
+  const seleccion = Array.from(document.querySelectorAll('input[type="checkbox"]'))
+    .filter(c => c.checked)
+    .map(c => c.value);
+
+  if (JSON.stringify(seleccion) !== JSON.stringify(coloresSeleccionados)) {
+    coloresSeleccionados = seleccion;
+    indiceActual = 0;
+    movimientosRealizados = 0;
+    mostrarOfertasPendiente = true;
+  }
+
+  if (coloresSeleccionados.length === 0) {
+    r.textContent = "Selecciona al menos un color.";
+    return;
+  }
+
+  const jugadores = coloresSeleccionados.length;
+  const movimientosPorCiclo = jugadores * 3;
+
+  if (mostrarOfertasPendiente) {
+    mostrarOfertas();
+    mostrarOfertasPendiente = false;
+    return;
+  }
+
+  if (indiceActual >= jugadores) indiceActual = 0;
+  const color = coloresSeleccionados[indiceActual];
+
+  const pasos =
+    Math.floor(Math.random() * 6 + 1) +
+    Math.floor(Math.random() * 6 + 1);
+
+  aplicarEstilo(color);
+
+  if (ventajaHeladoPendiente[color]) {
+    r.textContent = `${color}, muévete ${pasos} y envía a un jugador por un helado 🍦`;
+    ventajaHeladoPendiente[color] = false;
+  } else if (penalizacionPendiente[color]) {
+    r.textContent = `${color}: ${mensajesPenalizacion[Math.floor(Math.random() * mensajesPenalizacion.length)]}`;
+    penalizacionPendiente[color] = false;
+  } else {
+    r.textContent = `${color}, muévete ${pasos}`;
+  }
+
+  indiceActual++;
+  movimientosRealizados++;
+
+  if (movimientosRealizados % movimientosPorCiclo === 0) {
+    mostrarOfertasPendiente = true;
+  }
+}
+
+function comprar(color) {
+  const valor = parseInt(document.getElementById(`slider-${color}`).value);
+  if (dinero[color] < valor) return;
+
+  // ===== PROBABILIDAD DE FALLO (20%) =====
+  const fallo = Math.floor(Math.random() * 6) + 1;
+  if (fallo === 5) {
+    const errores = [
+      "Lo siento, lo tenemos agotado",
+      "Lo sentimos, la terminal se dañó y no puede leer tu tarjeta"
+    ];
+    alert(errores[Math.floor(Math.random() * errores.length)]);
+    return;
+  }
+  // =====================================
+
+  dinero[color] -= valor;
+  compras[color]++;
+  document.getElementById(`dinero-${color}`).textContent = `$${dinero[color]}`;
+
+  // ===== LÓGICA CLAVE DE PENALIZACIÓN / VENTAJA =====
+  if (compras[color] === 4) {
+    if (jugadoresConCuatroCompras < 3) {
+      penalizacionPendiente[color] = true;
+      jugadoresConCuatroCompras++;
+    } else {
+      ventajaHeladoPendiente[color] = true;
+    }
+  }
+
+  if (compras[color] === 6) {
+    alert("Haz hecho tu compra. Dirígete a la salida para ganar");
+    return;
+  }
+}
+
+function actualizarSlider(color) {
+  document.getElementById(`valor-${color}`).textContent =
+    document.getElementById(`slider-${color}`).value;
+}
+</script>
+
+
+<div id="modal-instrucciones" class="modal">
+  <div class="modal-contenido">
+    <h2>Instrucciones</h2>
+    <p>
+      En <strong>Vamos de Compras 2</strong> se respetan las reglas del juego original
+      con las siguientes modificaciones:
+    </p>
+    <ol>
+      <li>Al inicio del juego, estaciona tu auto en cualquier lugar disponible del estacionamiento e inicia tu movimiento.</li>  
+      <li>Tu dinero es limitado, así que planifica bien tus compras y considera el boleto de estacionamiento.</li>
+      <li>Puedes realizar más de una compra en un solo turno si el número de movimientos te lo permite.</li>
+      <li>Al finalizar tu sexta compra, debes bajar al estacionamiento, primero pagar tu boleto, luego moverte a tu auto y dirigirte a una salida para ganar.</li>
+      <li>
+        Si en algún momento pierdes tu boleto de estacionamiento y no quieres gastar turnos en recuperarlo,
+        puedes declarar que tomarás la salida peatonal para una victoria más rápida,
+        pero activarás todas las liquidaciones para el resto de jugadores.
+      </li>
+      <li>
+        El elevador puede llevarte a cualquier piso automáticamente pero al salir de él automáticamente será el fin de tu turno
+        aunque aún tuvieras movimientos disponibles.
+      </li>
+      <li>Al igual que en el juego original, ir al cine o a los restaurantes te da una ficha de comida que te da +3 en cualquier movimiento. 
+        Sólo puedes tener dos fichas a la vez.</li>
+      <li>Moverte dentro de una tienda no gasta ningún movimiento. Esto es especialmente valioso en el Supermercado.</li>
+    </ol>
+    <button onclick="cerrarInstrucciones()">Cerrar</button>
+  </div>
+</div>
+
+</body>
+</html>
